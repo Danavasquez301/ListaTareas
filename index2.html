@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Tareas</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      color: #fff;
+      overflow: hidden;
+      background: #0d001a;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 2.5rem;
+      color: #e0aaff;
+      text-shadow: 0 0 20px #9d4edd, 0 0 40px #7209b7;
+      animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 10px #9d4edd, 0 0 20px #7209b7; }
+      to { text-shadow: 0 0 25px #e0aaff, 0 0 50px #ff00ff; }
+    }
+
+    .container {
+      width: 90%;
+      max-width: 600px;
+      margin: auto;
+      background: rgba(50, 0, 80, 0.7);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 0 20px #7209b7;
+      z-index: 1;
+      animation: float 5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    input {
+      width: 70%;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      margin-right: 10px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+      box-shadow: 0 0 10px #7209b7;
+    }
+
+    button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px #ff00ff, 0 0 40px #9d4edd;
+    }
+
+    #addBtn {
+      background: #9d4edd;
+      color: white;
+    }
+
+    .mark-completed {
+      background: #3a0ca3;
+      color: #fff;
+      margin-left: 10px;
+    }
+
+    .delete {
+      background: #ff006e;
+      color: #fff;
+      margin-left: 10px;
+    }
+
+    #taskList {
+      margin-top: 20px;
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: rgba(255, 255, 255, 0.1);
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.1rem;
+      transition: 0.3s;
+    }
+
+    li:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 15px #9d4edd;
+    }
+
+    li.completed {
+      text-decoration: line-through;
+      color: #bdb2ff;
+    }
+
+    #error {
+      color: #ffb3c6;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 15px;
+      background: rgba(36, 0, 70, 0.8);
+      font-size: 1.2rem;
+      color: #e0aaff;
+      text-shadow: 0 0 10px #9d4edd;
+      letter-spacing: 2px;
+      z-index: 1;
+      animation: shimmer 3s infinite linear;
+    }
+
+    @keyframes shimmer {
+      0% { text-shadow: 0 0 10px #9d4edd; }
+      50% { text-shadow: 0 0 25px #ff00ff; }
+      100% { text-shadow: 0 0 10px #9d4edd; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+
+  <h1>🌌 Lista de Tareas</h1>
+  <div class="container">
+    <input type="text" id="taskInput" placeholder="Escribe una tarea...">
+    <button id="addBtn" onclick="addTask()">Agregar</button>
+    <div id="error"></div>
+    <ul id="taskList"></ul>
+  </div>
+  <footer>
+    ✨ Hecho por Dana ✨
+  </footer>
+
+  <script>
+    // ---- Fondo de estrellas con parpadeo ----
+    const canvas = document.getElementById("stars");
+    const ctx = canvas.getContext("2d");
+    let stars = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function createStars(count) {
+      stars = [];
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 1.5,
+          speed: Math.random() * 0.5 + 0.2,
+          alpha: Math.random(),
+          fade: Math.random() * 0.02
+        });
+      }
+    }
+
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let star of stars) {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${star.alpha})`;
+        ctx.fill();
+      }
+    }
+
+    function updateStars() {
+      for (let star of stars) {
+        star.y += star.speed;
+        star.alpha += star.fade;
+        if (star.alpha <= 0 || star.alpha >= 1) {
+          star.fade *= -1;
+        }
+        if (star.y > canvas.height) {
+          star.y = 0;
+          star.x = Math.random() * canvas.width;
+        }
+      }
+    }
+
+    function animateStars() {
+      drawStars();
+      updateStars();
+      requestAnimationFrame(animateStars);
+    }
+
+    createStars(200);
+    animateStars();
+
+    // ---- Lista de tareas ----
+    let tasks = [];
+
+    function addTask() {
+      const taskInput = document.getElementById("taskInput").value;
+      const errorDiv = document.getElementById("error");
+
+      try {
+        if (!taskInput.trim()) {
+          throw new Error("¡Por favor ingrese una tarea válida!");
+        }
+
+        const task = {
+          text: taskInput,
+          completed: false
+        };
+
+        tasks.push(task);
+        displayTasks();
+        document.getElementById("taskInput").value = '';
+        errorDiv.innerHTML = '';
+      } catch (error) {
+        errorDiv.innerHTML = error.message;
+      }
+    }
+
+    function displayTasks() {
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = '';
+
+      for (let i = 0; i < tasks.length; i++) {
+        const li = document.createElement("li");
+        li.textContent = tasks[i].text;
+
+        if (tasks[i].completed) {
+          li.classList.add("completed");
+        }
+
+        const markBtn = document.createElement("button");
+        markBtn.textContent = tasks[i].completed ? "Desmarcar" : "Marcar como realizada";
+        markBtn.className = "mark-completed";
+        markBtn.onclick = function () {
+          tasks[i].completed = !tasks[i].completed;
+          displayTasks();
+        };
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Eliminar";
+        deleteBtn.className = "delete";
+        deleteBtn.onclick = function () {
+          tasks.splice(i, 1);
+          displayTasks();
+        };
+
+        li.appendChild(markBtn);
+        li.appendChild(deleteBtn);
+        taskList.appendChild(li);
+      }
+    }
+  </script>
+</body>
+</html>
